@@ -11,8 +11,11 @@ FROM mcr.microsoft.com/dotnet/runtime:8.0
 WORKDIR /app
 COPY --from=build /app .
 
+# Install busybox for lightweight HTTP server (no python needed)
+RUN apt-get update && apt-get install -y busybox
+
 # Render Web Services require a port
 EXPOSE 10000
 
-# Add a simple HTTP server so Render health checks pass
-CMD ["sh", "-c", "dotnet MyApp.dll & python3 -m http.server 10000 --bind 0.0.0.0"]
+# Start your .NET app AND keep Render alive with busybox http server
+CMD ["sh", "-c", "dotnet MyApp.dll & busybox httpd -f -p 10000"]
